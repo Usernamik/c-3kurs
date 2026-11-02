@@ -9,7 +9,7 @@ public class ApartmentConfiguration : IEntityTypeConfiguration<Apartment>
 {
     public void Configure(EntityTypeBuilder<Apartment> builder)
     {
-        builder.HasKey(x => x.Id);
+        builder.Property(x => x.Id).HasConversion(x => x.Value, x => new ApartmentId(x));
 
         builder.Property(x => x.Address)
             .HasColumnType("varchar(500)")

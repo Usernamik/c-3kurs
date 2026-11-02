@@ -1,6 +1,8 @@
 using Api.Dtos;
+using Api.Modules.Errors;
 using Application.Common.Interfaces.Queries;
 using Application.Products.Commands;
+using Domain.Products;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -20,13 +22,11 @@ public class ProductsController(ISender sender, IProductQueries productQueries) 
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<ProductDto>> GetProduct(Guid id, CancellationToken cancellationToken)
     {
-        var product = await productQueries.GetById(id, cancellationToken);
-        if (product is null)
-        {
-            return NotFound();
-        }
+        var product = await productQueries.GetById(new ProductId(id), cancellationToken);
 
-        return ProductDto.FromDomainModel(product);
+        return product.Match<ActionResult<ProductDto>>(
+            current => ProductDto.FromDomainModel(current),
+            () => NotFound());
     }
 
     [HttpPost]
@@ -40,16 +40,14 @@ public class ProductsController(ISender sender, IProductQueries productQueries) 
             Price = request.Price
         };
 
-        try
-        {
-            var product = await sender.Send(input, cancellationToken);
-            var dto = ProductDto.FromDomainModel(product);
-            return CreatedAtAction(nameof(GetProduct), new { id = dto.Id }, dto);
-        }
-        catch (ArgumentException exception)
-        {
-            return Conflict(exception.Message);
-        }
+        var result = await sender.Send(input, cancellationToken);
+
+        return result.Match<ActionResult<ProductDto>>(
+            product => CreatedAtAction(
+                nameof(GetProduct),
+                new { id = product.Id.Value },
+                ProductDto.FromDomainModel(product)),
+            error => error.ToObjectResult());
     }
 
     [HttpPut("{id:guid}")]
@@ -65,20 +63,11 @@ public class ProductsController(ISender sender, IProductQueries productQueries) 
             Price = request.Price
         };
 
-        try
-        {
-            var product = await sender.Send(input, cancellationToken);
-            if (product is null)
-            {
-                return NotFound();
-            }
+        var result = await sender.Send(input, cancellationToken);
 
-            return ProductDto.FromDomainModel(product);
-        }
-        catch (ArgumentException exception)
-        {
-            return Conflict(exception.Message);
-        }
+        return result.Match<ActionResult<ProductDto>>(
+            product => ProductDto.FromDomainModel(product),
+            error => error.ToObjectResult());
     }
 
     [HttpDelete("{id:guid}")]
@@ -89,12 +78,10 @@ public class ProductsController(ISender sender, IProductQueries productQueries) 
             ProductId = id
         };
 
-        var deleted = await sender.Send(input, cancellationToken);
-        if (!deleted)
-        {
-            return NotFound();
-        }
+        var result = await sender.Send(input, cancellationToken);
 
-        return NoContent();
+        return result.Match<IActionResult>(
+            _ => NoContent(),
+            error => error.ToObjectResult());
     }
 }

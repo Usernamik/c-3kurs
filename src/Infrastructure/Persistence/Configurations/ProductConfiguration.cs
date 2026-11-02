@@ -12,7 +12,8 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.HasKey(x => x.Id);
 
         builder.Property(x => x.Id)
-            .HasColumnType("uuid");
+            .HasColumnType("uuid")
+            .HasConversion(x => x.Value, x => new ProductId(x));
 
         builder.Property(x => x.Title)
             .HasColumnType("varchar(255)")

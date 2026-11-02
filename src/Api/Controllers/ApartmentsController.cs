@@ -1,6 +1,8 @@
 using Api.Dtos;
+using Api.Modules.Errors;
 using Application.Apartments.Commands;
 using Application.Common.Interfaces.Queries;
+using Domain.Apartments;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -22,13 +24,11 @@ public class ApartmentsController(
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<ApartmentDto>> GetApartment(Guid id, CancellationToken cancellationToken)
     {
-        var apartment = await apartmentQueries.GetById(id, cancellationToken);
-        if (apartment is null)
-        {
-            return NotFound();
-        }
+        var apartment = await apartmentQueries.GetById(new ApartmentId(id), cancellationToken);
 
-        return ApartmentDto.FromDomainModel(apartment);
+        return apartment.Match<ActionResult<ApartmentDto>>(
+            current => ApartmentDto.FromDomainModel(current),
+            () => NotFound());
     }
 
     [HttpPost]
@@ -45,16 +45,14 @@ public class ApartmentsController(
             IsSold = request.IsSold
         };
 
-        try
-        {
-            var apartment = await sender.Send(input, cancellationToken);
-            var dto = ApartmentDto.FromDomainModel(apartment);
-            return CreatedAtAction(nameof(GetApartment), new { id = dto.Id }, dto);
-        }
-        catch (ArgumentException exception)
-        {
-            return Conflict(exception.Message);
-        }
+        var result = await sender.Send(input, cancellationToken);
+
+        return result.Match<ActionResult<ApartmentDto>>(
+            apartment => CreatedAtAction(
+                nameof(GetApartment),
+                new { id = apartment.Id.Value },
+                ApartmentDto.FromDomainModel(apartment)),
+            error => error.ToObjectResult());
     }
 
     [HttpPut("{id:guid}")]
@@ -73,20 +71,11 @@ public class ApartmentsController(
             IsSold = request.IsSold
         };
 
-        try
-        {
-            var apartment = await sender.Send(input, cancellationToken);
-            if (apartment is null)
-            {
-                return NotFound();
-            }
+        var result = await sender.Send(input, cancellationToken);
 
-            return ApartmentDto.FromDomainModel(apartment);
-        }
-        catch (ArgumentException exception)
-        {
-            return Conflict(exception.Message);
-        }
+        return result.Match<ActionResult<ApartmentDto>>(
+            apartment => ApartmentDto.FromDomainModel(apartment),
+            error => error.ToObjectResult());
     }
 
     [HttpDelete("{id:guid}")]
@@ -97,12 +86,10 @@ public class ApartmentsController(
             ApartmentId = id
         };
 
-        var deleted = await sender.Send(input, cancellationToken);
-        if (!deleted)
-        {
-            return NotFound();
-        }
+        var result = await sender.Send(input, cancellationToken);
 
-        return NoContent();
+        return result.Match<IActionResult>(
+            _ => NoContent(),
+            error => error.ToObjectResult());
     }
 }

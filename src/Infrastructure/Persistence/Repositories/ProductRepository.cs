@@ -1,6 +1,7 @@
 using Application.Common.Interfaces.Queries;
 using Application.Common.Interfaces.Repositories;
 using Domain.Products;
+using LanguageExt;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Persistence.Repositories;
@@ -14,16 +15,20 @@ public class ProductRepository(ApplicationDbContext context) : IProductRepositor
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<Product?> GetById(Guid id, CancellationToken cancellationToken)
+    public async Task<Option<Product>> GetById(ProductId id, CancellationToken cancellationToken)
     {
-        return await context.Products
+        var entity = await context.Products
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+        return entity ?? Option<Product>.None;
     }
 
-    public async Task<Product?> GetByTitle(string title, CancellationToken cancellationToken)
+    public async Task<Option<Product>> GetByTitle(string title, CancellationToken cancellationToken)
     {
-        return await context.Products
+        var entity = await context.Products
             .FirstOrDefaultAsync(x => x.Title == title, cancellationToken);
+
+        return entity ?? Option<Product>.None;
     }
 
     public async Task<Product> Add(Product product, CancellationToken cancellationToken)

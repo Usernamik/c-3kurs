@@ -1,6 +1,7 @@
 using Application.Common.Interfaces.Queries;
 using Application.Common.Interfaces.Repositories;
 using Domain.Apartments;
+using LanguageExt;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Persistence.Repositories;
@@ -14,14 +15,20 @@ public class ApartmentRepository(ApplicationDbContext context) : IApartmentRepos
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<Apartment?> GetById(Guid id, CancellationToken cancellationToken)
+    public async Task<Option<Apartment>> GetById(ApartmentId id, CancellationToken cancellationToken)
     {
-        return await context.Apartments.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        var entity = await context.Apartments
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+        return entity ?? Option<Apartment>.None;
     }
 
-    public async Task<Apartment?> GetByAddress(string address, CancellationToken cancellationToken)
+    public async Task<Option<Apartment>> GetByAddress(string address, CancellationToken cancellationToken)
     {
-        return await context.Apartments.FirstOrDefaultAsync(x => x.Address == address, cancellationToken);
+        var entity = await context.Apartments
+            .FirstOrDefaultAsync(x => x.Address == address, cancellationToken);
+
+        return entity ?? Option<Apartment>.None;
     }
 
     public async Task<Apartment> Add(Apartment apartment, CancellationToken cancellationToken)
