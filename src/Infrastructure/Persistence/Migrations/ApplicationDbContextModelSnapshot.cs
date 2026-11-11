@@ -66,36 +66,6 @@ namespace Infrastructure.Persistence.Migrations
                     b.ToTable("apartments", (string)null);
                 });
 
-            modelBuilder.Entity("Domain.Products.Product", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at")
-                        .HasDefaultValueSql("timezone('utc', now())");
-
-                    b.Property<decimal>("Price")
-                        .HasColumnType("numeric(18,2)")
-                        .HasColumnName("price");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("varchar(255)")
-                        .HasColumnName("title");
-
-                    b.HasKey("Id")
-                        .HasName("pk_products");
-
-                    b.HasIndex("Title")
-                        .IsUnique()
-                        .HasDatabaseName("ix_products_title");
-
-                    b.ToTable("products", (string)null);
-                });
 #pragma warning restore 612, 618
         }
     }

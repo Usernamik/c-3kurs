@@ -21,6 +21,23 @@ public class ApartmentsController(
         return apartments.Select(ApartmentDto.FromDomainModel).ToList();
     }
 
+    [HttpPost("filter")]
+    public async Task<ActionResult<IReadOnlyList<ApartmentDto>>> FilterApartments(
+        [FromBody] SearchApartmentDto request,
+        CancellationToken cancellationToken)
+    {
+        var apartments = await apartmentQueries.Filter(
+            request.Address,
+            request.Area,
+            request.RoomsCount,
+            request.Price,
+            request.IsSold,
+            request.CreatedAt,
+            cancellationToken);
+
+        return apartments.Select(ApartmentDto.FromDomainModel).ToList();
+    }
+
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<ApartmentDto>> GetApartment(Guid id, CancellationToken cancellationToken)
     {

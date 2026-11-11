@@ -15,6 +15,53 @@ public class ApartmentRepository(ApplicationDbContext context) : IApartmentRepos
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<Apartment>> Filter(
+        string? address,
+        decimal? area,
+        int? roomsCount,
+        decimal? price,
+        bool? isSold,
+        DateTime? createdAt,
+        CancellationToken cancellationToken)
+    {
+        var query = context.Apartments.AsNoTracking();
+
+        if (!string.IsNullOrEmpty(address))
+        {
+            var addressFilter = address.Trim().ToLower();
+            query = query.Where(x => x.Address.ToLower().Contains(addressFilter));
+        }
+
+        if (area is not null)
+        {
+            query = query.Where(x => x.Area == area);
+        }
+
+        if (roomsCount is not null)
+        {
+            query = query.Where(x => x.RoomsCount == roomsCount);
+        }
+
+        if (price is not null)
+        {
+            query = query.Where(x => x.Price == price);
+        }
+
+        if (isSold is not null)
+        {
+            query = query.Where(x => x.IsSold == isSold);
+        }
+
+        if (createdAt is not null)
+        {
+            var start = DateTime.SpecifyKind(createdAt.Value.Date, DateTimeKind.Utc);
+            var end = start.AddDays(1);
+            query = query.Where(x => x.CreatedAt >= start && x.CreatedAt < end);
+        }
+
+        return await query.ToListAsync(cancellationToken);
+    }
+
     public async Task<Option<Apartment>> GetById(ApartmentId id, CancellationToken cancellationToken)
     {
         var entity = await context.Apartments

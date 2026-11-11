@@ -21,3 +21,11 @@ public record UpdateApartmentDto(
     int RoomsCount,
     decimal Price,
     bool IsSold = false);
+
+public record SearchApartmentDto(
+    string? Address = null,
+    decimal? Area = null,
+    int? RoomsCount = null,
+    decimal? Price = null,
+    bool? IsSold = null,
+    DateTime? CreatedAt = null);

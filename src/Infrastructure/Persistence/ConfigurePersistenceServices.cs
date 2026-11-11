@@ -40,9 +40,5 @@ public static class ConfigurePersistenceServices
         services.AddScoped<ApartmentRepository>();
         services.AddScoped<IApartmentRepository>(provider => provider.GetRequiredService<ApartmentRepository>());
         services.AddScoped<IApartmentQueries>(provider => provider.GetRequiredService<ApartmentRepository>());
-
-        services.AddScoped<ProductRepository>();
-        services.AddScoped<IProductRepository>(provider => provider.GetRequiredService<ProductRepository>());
-        services.AddScoped<IProductQueries>(provider => provider.GetRequiredService<ProductRepository>());
     }
 }
